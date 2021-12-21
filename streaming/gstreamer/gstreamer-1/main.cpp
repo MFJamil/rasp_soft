@@ -16,7 +16,7 @@ int main(int arg, char *argv[]) {
             nullptr);
             */
     pipeline = gst_parse_launch(
-            &argv[0],
+            "playbin uri=" + &argv[0],
             nullptr);
 
 
