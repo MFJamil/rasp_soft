@@ -1,6 +1,7 @@
 #include <iostream>
 #include <gst/gst.h>
 
+using namespace std;
 int main(int arg, char *argv[]) {
     GstElement *pipeline = nullptr;
     GstBus *bus = nullptr;
@@ -15,8 +16,9 @@ int main(int arg, char *argv[]) {
             "playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
             nullptr);
             */
+    string cmd = string("playbin uri=") + argv[1];
     pipeline = gst_parse_launch(
-            "playbin uri=" + &argv[0],
+            cmd,
             nullptr);
 
 
