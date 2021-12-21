@@ -10,9 +10,16 @@ int main(int arg, char *argv[]) {
     gst_init(&arg, &argv);
 
     // building pipeline
+    /*
     pipeline = gst_parse_launch(
             "playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
             nullptr);
+            */
+    pipeline = gst_parse_launch(
+            &argb[0],
+            nullptr);
+
+
 
     // start playing
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
