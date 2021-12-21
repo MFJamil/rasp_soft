@@ -16,7 +16,7 @@ int main(int arg, char *argv[]) {
             nullptr);
             */
     pipeline = gst_parse_launch(
-            &argb[0],
+            &argv[0],
             nullptr);
 
 
