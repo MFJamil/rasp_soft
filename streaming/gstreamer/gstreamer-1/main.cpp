@@ -18,7 +18,8 @@ int main(int arg, char *argv[]) {
             nullptr);
             */
     string playBin = "playbin uri=";
-    string cmd = playBin + argv[1];
+    string urlFile = argv[1];
+    string cmd = playBin + urlFile;
     pipeline = gst_parse_launch(
             cmd,
             nullptr);
