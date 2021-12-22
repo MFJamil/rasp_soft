@@ -21,7 +21,7 @@ int main(int arg, char *argv[]) {
     string urlFile = argv[1];
     string cmd = playBin + urlFile;
     pipeline = gst_parse_launch(
-            cmd,
+            cmd.c_str(),
             nullptr);
 
 
