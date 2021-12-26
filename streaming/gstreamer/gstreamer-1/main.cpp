@@ -16,14 +16,15 @@ int main(int arg, char *argv[]) {
     pipeline = gst_parse_launch(
             "playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm",
             nullptr);
-            */
+     /*/       
+    //*
     string playBin = "playbin uri=";
     string urlFile = argv[1];
     string cmd = playBin + urlFile;
     pipeline = gst_parse_launch(
             cmd.c_str(),
             nullptr);
-
+    //*/
 
 
     // start playing
