@@ -46,12 +46,100 @@ static void realize_cb(GtkWidget *widget,CustomData *data){
 
 }
 
+/* Extract metadata from all the streams and write it to the text widget in the GUI */
+static void
+analyze_streams (CustomData * data)
+{
+  gint i;
+  GstTagList *tags;
+  gchar *str, *total_str;
+  guint rate;
+  gint n_video, n_audio, n_text;
+  GtkTextBuffer *text;
+
+  /* Clean current contents of the widget */
+  text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
+  gtk_text_buffer_set_text (text, "", -1);
+
+  /* Read some properties */
+  g_object_get (data->playbin, "n-video", &n_video, NULL);
+  g_object_get (data->playbin, "n-audio", &n_audio, NULL);
+  g_object_get (data->playbin, "n-text", &n_text, NULL);
+
+  for (i = 0; i < n_video; i++) {
+    tags = NULL;
+    /* Retrieve the stream's video tags */
+    g_signal_emit_by_name (data->playbin, "get-video-tags", i, &tags);
+    if (tags) {
+      total_str = g_strdup_printf ("video stream %d:\n", i);
+      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+      g_free (total_str);
+      gst_tag_list_get_string (tags, GST_TAG_VIDEO_CODEC, &str);
+      total_str = g_strdup_printf ("  codec: %s\n", str ? str : "unknown");
+      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+      g_free (total_str);
+      g_free (str);
+      gst_tag_list_free (tags);
+    }
+  }
+
+  for (i = 0; i < n_audio; i++) {
+    tags = NULL;
+    /* Retrieve the stream's audio tags */
+    g_signal_emit_by_name (data->playbin, "get-audio-tags", i, &tags);
+    if (tags) {
+      total_str = g_strdup_printf ("\naudio stream %d:\n", i);
+      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+      g_free (total_str);
+      if (gst_tag_list_get_string (tags, GST_TAG_AUDIO_CODEC, &str)) {
+        total_str = g_strdup_printf ("  codec: %s\n", str);
+        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+        g_free (total_str);
+        g_free (str);
+      }
+      if (gst_tag_list_get_string (tags, GST_TAG_LANGUAGE_CODE, &str)) {
+        total_str = g_strdup_printf ("  language: %s\n", str);
+        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+        g_free (total_str);
+        g_free (str);
+      }
+      if (gst_tag_list_get_uint (tags, GST_TAG_BITRATE, &rate)) {
+        total_str = g_strdup_printf ("  bitrate: %d\n", rate);
+        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+        g_free (total_str);
+      }
+      gst_tag_list_free (tags);
+    }
+  }
+
+  for (i = 0; i < n_text; i++) {
+    tags = NULL;
+    /* Retrieve the stream's subtitle tags */
+    g_signal_emit_by_name (data->playbin, "get-text-tags", i, &tags);
+    if (tags) {
+      total_str = g_strdup_printf ("\nsubtitle stream %d:\n", i);
+      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+      g_free (total_str);
+      if (gst_tag_list_get_string (tags, GST_TAG_LANGUAGE_CODE, &str)) {
+        total_str = g_strdup_printf ("  language: %s\n", str);
+        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+        g_free (total_str);
+        g_free (str);
+      }
+      gst_tag_list_free (tags);
+    }
+  }
+}
+
 /* This function is called periodically to refresh the GUI */
 static gboolean refresh_ui(CustomData *data){
     gint64 current  = -1;
     /*We do not want to update anything unless we are in the PAUSED or PLAYING state */
-    if (data->state < GST_STATE_PAUSED)
-        return TRUE;
+    if (data->state < GST_STATE_PAUSED){
+      g_print("State is %s , so no refresh will take place ",gst_element_state_get_name (data->state));
+      return TRUE;
+    }
+       
     /* If we didn't know it yet, query the stream duration */
     if (!GST_CLOCK_TIME_IS_VALID(data->duration)){
         if (!gst_element_query_duration(data->playbin,GST_FORMAT_TIME,&data->duration)){
@@ -73,6 +161,31 @@ static gboolean refresh_ui(CustomData *data){
     return TRUE;
 
     }
+
+/* This function will be called when the Movie is selected  */
+static void play_movie_cb(GtkButton *button,CustomData *data){
+  g_print("\nButton is clicked holding the value : %s ", gtk_button_get_label(button));
+  string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
+  if (strcmp(gtk_button_get_label(button),"M1")==0)
+    uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
+  else if (strcmp(gtk_button_get_label(button),"M2")==0)
+    uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
+  g_print("\nPlaying now the movie : %s \n", uriSrc.c_str());
+  
+  
+  data->duration = GST_CLOCK_TIME_NONE;
+  gtk_scale_set_draw_value (GTK_SCALE (data->slider), 0);
+
+  gst_element_set_state(data->playbin, GST_STATE_NULL);
+  
+  //refresh_ui(data);
+  g_object_set(data->playbin,"uri", uriSrc.c_str() ,NULL);
+  gst_element_set_state(data->playbin, GST_STATE_PAUSED);
+
+  gst_element_set_state(data->playbin, GST_STATE_PLAYING);
+
+  
+}
 
 /* This function will be called when the PLAY button is clicked  */
 static void play_cb(GtkButton *button,CustomData *data){
@@ -96,26 +209,7 @@ static void delete_event_cb (GtkWidget *widget,GdkEvent *event,CustomData *data)
 
 }
 
-/* This function will be called when the Movie is selected  */
-static void play_movie_cb(GtkButton *button,CustomData *data){
-  g_print("\nButton is clicked holding the value : %s ", gtk_button_get_label(button));
-  string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
-  if (strcmp(gtk_button_get_label(button),"M1")==0)
-    uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-  else if (strcmp(gtk_button_get_label(button),"M2")==0)
-    uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
-  
-  
-  g_print("\nPlaying now the movie : %s ", uriSrc.c_str());
-  
-  gst_element_set_state(data->playbin, GST_STATE_NULL);
-  g_object_set(data->playbin,"uri", uriSrc.c_str() ,NULL);
-  gst_element_set_state(data->playbin, GST_STATE_PLAYING);
-      //string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-    //string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
 
-    //gst_element_set_state(data->playbin, GST_STATE_PLAYING);
-}
 /* This function is called everytime the video window needs to be redrawn (due to damage/exposure,
  * rescaling, etc). GStreamer takes care of this in the PAUSED and PLAYING states, otherwise,
  * we simply draw a black rectangle to avoid garbage showing up. */
@@ -136,9 +230,13 @@ static gboolean draw_cb(GtkWidget *widget,cairo_t *cr,CustomData *data){
 /* This function is called when the slider changes its position. We perform a seek to the
  * new position here. */
 static void slider_cb (GtkRange *range, CustomData *data) {
-  gdouble value = gtk_range_get_value (GTK_RANGE (data->slider));
-  gst_element_seek_simple (data->playbin, GST_FORMAT_TIME, static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT),
-      (gint64)(value * GST_SECOND));
+  if(data->state == GST_STATE_PLAYING){
+    gdouble value = gtk_range_get_value (GTK_RANGE (data->slider));
+    g_print("\nSlider position changed %d ",value);
+
+    gst_element_seek_simple (data->playbin, GST_FORMAT_TIME, static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT),
+        (gint64)(value * GST_SECOND));
+  }
 }
 
 
@@ -230,90 +328,6 @@ create_ui (CustomData * data)
   gtk_window_set_default_size (GTK_WINDOW (main_window), 640, 480);
 
   gtk_widget_show_all (main_window);
-}
-/* Extract metadata from all the streams and write it to the text widget in the GUI */
-static void
-analyze_streams (CustomData * data)
-{
-  gint i;
-  GstTagList *tags;
-  gchar *str, *total_str;
-  guint rate;
-  gint n_video, n_audio, n_text;
-  GtkTextBuffer *text;
-
-  /* Clean current contents of the widget */
-  text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
-  gtk_text_buffer_set_text (text, "", -1);
-
-  /* Read some properties */
-  g_object_get (data->playbin, "n-video", &n_video, NULL);
-  g_object_get (data->playbin, "n-audio", &n_audio, NULL);
-  g_object_get (data->playbin, "n-text", &n_text, NULL);
-
-  for (i = 0; i < n_video; i++) {
-    tags = NULL;
-    /* Retrieve the stream's video tags */
-    g_signal_emit_by_name (data->playbin, "get-video-tags", i, &tags);
-    if (tags) {
-      total_str = g_strdup_printf ("video stream %d:\n", i);
-      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-      g_free (total_str);
-      gst_tag_list_get_string (tags, GST_TAG_VIDEO_CODEC, &str);
-      total_str = g_strdup_printf ("  codec: %s\n", str ? str : "unknown");
-      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-      g_free (total_str);
-      g_free (str);
-      gst_tag_list_free (tags);
-    }
-  }
-
-  for (i = 0; i < n_audio; i++) {
-    tags = NULL;
-    /* Retrieve the stream's audio tags */
-    g_signal_emit_by_name (data->playbin, "get-audio-tags", i, &tags);
-    if (tags) {
-      total_str = g_strdup_printf ("\naudio stream %d:\n", i);
-      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-      g_free (total_str);
-      if (gst_tag_list_get_string (tags, GST_TAG_AUDIO_CODEC, &str)) {
-        total_str = g_strdup_printf ("  codec: %s\n", str);
-        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-        g_free (total_str);
-        g_free (str);
-      }
-      if (gst_tag_list_get_string (tags, GST_TAG_LANGUAGE_CODE, &str)) {
-        total_str = g_strdup_printf ("  language: %s\n", str);
-        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-        g_free (total_str);
-        g_free (str);
-      }
-      if (gst_tag_list_get_uint (tags, GST_TAG_BITRATE, &rate)) {
-        total_str = g_strdup_printf ("  bitrate: %d\n", rate);
-        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-        g_free (total_str);
-      }
-      gst_tag_list_free (tags);
-    }
-  }
-
-  for (i = 0; i < n_text; i++) {
-    tags = NULL;
-    /* Retrieve the stream's subtitle tags */
-    g_signal_emit_by_name (data->playbin, "get-text-tags", i, &tags);
-    if (tags) {
-      total_str = g_strdup_printf ("\nsubtitle stream %d:\n", i);
-      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-      g_free (total_str);
-      if (gst_tag_list_get_string (tags, GST_TAG_LANGUAGE_CODE, &str)) {
-        total_str = g_strdup_printf ("  language: %s\n", str);
-        gtk_text_buffer_insert_at_cursor (text, total_str, -1);
-        g_free (total_str);
-        g_free (str);
-      }
-      gst_tag_list_free (tags);
-    }
-  }
 }
 
 /* This function is called when an error message is posted on the bus */
