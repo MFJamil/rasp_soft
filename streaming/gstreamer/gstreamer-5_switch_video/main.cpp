@@ -96,7 +96,26 @@ static void delete_event_cb (GtkWidget *widget,GdkEvent *event,CustomData *data)
 
 }
 
+/* This function will be called when the Movie is selected  */
+static void play_movie_cb(GtkButton *button,CustomData *data){
+  g_print("\nButton is clicked holding the value : %s ", gtk_button_get_label(button));
+  string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
+  if (strcmp(gtk_button_get_label(button),"M1")==0)
+    uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
+  else if (strcmp(gtk_button_get_label(button),"M2")==0)
+    uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
+  
+  
+  g_print("\nPlaying now the movie : %s ", uriSrc.c_str());
+  
+  gst_element_set_state(data->playbin, GST_STATE_NULL);
+  g_object_set(data->playbin,"uri", uriSrc.c_str() ,NULL);
+  gst_element_set_state(data->playbin, GST_STATE_PLAYING);
+      //string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
+    //string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
 
+    //gst_element_set_state(data->playbin, GST_STATE_PLAYING);
+}
 /* This function is called everytime the video window needs to be redrawn (due to damage/exposure,
  * rescaling, etc). GStreamer takes care of this in the PAUSED and PLAYING states, otherwise,
  * we simply draw a black rectangle to avoid garbage showing up. */
@@ -142,7 +161,7 @@ create_ui (CustomData * data)
   GtkWidget *main_box;          /* VBox to hold main_hbox and the controls */
   GtkWidget *main_hbox;         /* HBox to hold the video_window and the stream info text widget */
   GtkWidget *controls;          /* HBox to hold the buttons and the slider */
-  GtkWidget *play_button, *pause_button, *stop_button;  /* Buttons */
+  GtkWidget *play_button, *pause_button, *stop_button, *src_1_button,*src_2_button;  /* Buttons */
 
   main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   g_signal_connect (G_OBJECT (main_window), "delete-event",
@@ -171,6 +190,17 @@ create_ui (CustomData * data)
   g_signal_connect (G_OBJECT (stop_button), "clicked", G_CALLBACK (stop_cb),
       data);
 
+  src_1_button =
+      gtk_button_new_with_label ("M1");
+  g_signal_connect (G_OBJECT (src_1_button), "clicked", G_CALLBACK (play_movie_cb),
+      data);
+
+  src_2_button =
+      gtk_button_new_with_label ("M2");
+  g_signal_connect (G_OBJECT (src_2_button), "clicked", G_CALLBACK (play_movie_cb),
+      data);
+
+
   data->slider =
       gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
   gtk_scale_set_draw_value (GTK_SCALE (data->slider), 0);
@@ -185,6 +215,8 @@ create_ui (CustomData * data)
   gtk_box_pack_start (GTK_BOX (controls), play_button, FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), pause_button, FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), stop_button, FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), src_1_button, FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), src_2_button, FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), data->slider, TRUE, TRUE, 2);
 
   main_hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
