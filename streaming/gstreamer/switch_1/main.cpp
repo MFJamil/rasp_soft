@@ -17,19 +17,6 @@ struct Custom_Data{
 };
 /* Handler for the pad added signal */
 static void pad_added_handler(GstElement *src,GstPad *pad,Custom_Data *data);
-void switchMovie(Custom_Data * data){
-    gst_element_set_state(data->pipeline, GST_STATE_NULL);
-    string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-    //string uriSrc = "file:/home/pi/development/video/bunny.mp4";
-    
-    //string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
-
-    g_object_set(data->source,"uri", uriSrc.c_str() ,NULL);
-    gst_element_set_state(data->pipeline, GST_STATE_PAUSED);
-    gst_element_set_state(data->pipeline, GST_STATE_PLAYING);
-    
-
-}
 
 static void handle_message(Custom_Data *data, GstMessage *msg){
     GError *err;
@@ -61,12 +48,9 @@ int main(int arg, char *argv[]) {
     gboolean terminate = FALSE;
     gboolean switchDone = FALSE;
 
-
     // gstreamer initialization
     gst_init(&arg, &argv);
 
-  
-  
     /* Create the elements */
     data.source = gst_element_factory_make("uridecodebin","source");
     data.aconvert = gst_element_factory_make("audioconvert","aconvert");
@@ -75,9 +59,6 @@ int main(int arg, char *argv[]) {
     data.asink = gst_element_factory_make("autoaudiosink","asink");
     data.vsink = gst_element_factory_make("fbdevsink","vsink");
 
-    
-  
-    
     /* create the empty pipeline */
     data.pipeline = gst_pipeline_new("test-pipeline");
     
@@ -93,27 +74,22 @@ int main(int arg, char *argv[]) {
         gst_printerr("Audio Elements could not be linked \n");
         gst_object_unref(data.pipeline);
         return -1;
-
     }
     if (!gst_element_link_many(data.vconvert,data.vsink,NULL)){
         gst_printerr("Video Elements could not be linked \n");
         gst_object_unref(data.pipeline);
         return -1;
-
     }
 
     /* Set the URI to play*/
     /* Below can be replaced with the command line argument to dynamically change the source*/
     //string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-    string uriSrc = "file:/home/pi/development/video/bunny.mp4";
-    
-    //string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
+    string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
 
     g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
     
     /* connect to the pad-added signal */ 
     g_signal_connect(data.source,"pad-added",G_CALLBACK(pad_added_handler),&data);
-
 
     // start playing
     ret = gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
@@ -121,34 +97,23 @@ int main(int arg, char *argv[]) {
         gst_printerr("Unable to set the pipeline to playing state \n");
         gst_object_unref(data.pipeline);
         return -1;
-
     }
 
-
-    //wait until error or EOS ( End Of Stream )
     bus = gst_element_get_bus(data.pipeline);
-    //g_timeout_add_seconds(10,(GSourceFunc)switchMovie,&data);
     do{
         msg = gst_bus_timed_pop_filtered(bus, 10000 * GST_MSECOND,
                                         static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
-
         // free memory
         if (msg != nullptr){
             handle_message(&data,msg);
         }else{
             if (switchDone==FALSE){
                 gst_element_set_state(data.pipeline, GST_STATE_READY);
-                //gst_element_set_state(data.playbin, GST_STATE_NULL);
-
                 string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
                 g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
                 gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
                 g_print("\n Reached 10S, performing seek ....\n");
-                //gst_element_seek_simple(data.playbin,GST_FORMAT_TIME,static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_KEY_UNIT),(30*GST_SECOND));
-                //data.seek_done = TRUE;
                 switchDone = TRUE;
-           
-
             }
         }
     }while(!terminate);
@@ -156,7 +121,6 @@ int main(int arg, char *argv[]) {
     gst_object_unref(bus);
     gst_element_set_state(data.pipeline, GST_STATE_NULL);
     gst_object_unref(data.pipeline);
-
     return 0;
 }
 
@@ -168,7 +132,6 @@ static void pad_added_handler(GstElement *src,GstPad *new_pad,Custom_Data *data)
     GstCaps *new_pad_caps = nullptr;
     GstStructure *new_pad_struct = nullptr;
     const gchar *new_pad_type = nullptr;
-
     g_print("Received new pad '%s' from '%s' :\n",GST_PAD_NAME(new_pad),GST_ELEMENT_NAME(src));
 
     /* if our converter is already linked, we have nothing to do here */
@@ -188,7 +151,6 @@ static void pad_added_handler(GstElement *src,GstPad *new_pad,Custom_Data *data)
         ){
         g_print("It has type %s which is not raw audio or Video.Ignoring.\n",new_pad_type);
         goto exit;
-
     }
 
     /* Attempt the link */
@@ -209,5 +171,4 @@ static void pad_added_handler(GstElement *src,GstPad *new_pad,Custom_Data *data)
     /* Unreference the sink pad */
     gst_object_unref(asink_pad);
     gst_object_unref(vsink_pad);
-
 }
