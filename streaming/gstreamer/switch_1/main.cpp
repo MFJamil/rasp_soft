@@ -24,7 +24,7 @@ void switchMovie(Custom_Data * data){
     
     //string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
 
-    g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
+    g_object_set(data->source,"uri", uriSrc.c_str() ,NULL);
     gst_element_set_state(data->pipeline, GST_STATE_PAUSED);
     gst_element_set_state(data->pipeline, GST_STATE_PLAYING);
     
@@ -50,7 +50,7 @@ int main(int arg, char *argv[]) {
     data.vconvert = gst_element_factory_make("videoconvert","vconvert");
     data.resample = gst_element_factory_make("audioresample","resample");
     data.asink = gst_element_factory_make("autoaudiosink","asink");
-    data.vsink = gst_element_factory_make("autovideosink","vsink");
+    data.vsink = gst_element_factory_make("fbdevsink","vsink");
 
     
   
@@ -105,6 +105,7 @@ int main(int arg, char *argv[]) {
     //wait until error or EOS ( End Of Stream )
     bus = gst_element_get_bus(data.pipeline);
     g_timeout_add_seconds(10,(GSourceFunc)switchMovie,&data);
+    /*
     do{
         msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE,
                                         static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
@@ -126,7 +127,7 @@ int main(int arg, char *argv[]) {
                 g_print("End-Of-Stream reached. \n");
                 break;
             case GST_MESSAGE_STATE_CHANGED:
-                /* we are only interested in state-changed messages from the pipeline */
+                //we are only interested in state-changed messages from the pipeline 
                 if(GST_MESSAGE_SRC(msg)==GST_OBJECT(data.pipeline)){
                     GstState old_state,new_state,pending_state;
                     gst_message_parse_state_changed(msg,&old_state,&new_state,&pending_state);
@@ -142,6 +143,8 @@ int main(int arg, char *argv[]) {
 
         }
     }while(!terminate);
+    */
+
     gst_object_unref(bus);
     gst_element_set_state(data.pipeline, GST_STATE_NULL);
     gst_object_unref(data.pipeline);
