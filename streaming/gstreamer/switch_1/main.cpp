@@ -48,6 +48,7 @@ int main(int arg, char *argv[]) {
     gboolean terminate = FALSE;
     gboolean switchDone = FALSE;
 
+
     // gstreamer initialization
     gst_init(&arg, &argv);
 
