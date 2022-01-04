@@ -126,7 +126,7 @@ int main(int arg, char *argv[]) {
 
     //wait until error or EOS ( End Of Stream )
     bus = gst_element_get_bus(data.pipeline);
-    g_timeout_add_seconds(10,(GSourceFunc)switchMovie,&data);
+    //g_timeout_add_seconds(10,(GSourceFunc)switchMovie,&data);
     do{
         msg = gst_bus_timed_pop_filtered(bus, 10000 * GST_MSECOND,
                                         static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
@@ -143,10 +143,10 @@ int main(int arg, char *argv[]) {
             gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
             g_print("\n Reached 10S, performing seek ....\n");
             //gst_element_seek_simple(data.playbin,GST_FORMAT_TIME,static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_KEY_UNIT),(30*GST_SECOND));
-            data.seek_done = TRUE;
+            //data.seek_done = TRUE;
            
         }
-    }while(!data.terminate);
+    }while(!terminate);
 
     gst_object_unref(bus);
     gst_element_set_state(data.pipeline, GST_STATE_NULL);
