@@ -59,6 +59,7 @@ int main(int arg, char *argv[]) {
     GstMessage *msg = nullptr;
     GstStateChangeReturn ret;
     gboolean terminate = FALSE;
+    gboolean switchDone = FALSE;
 
 
     // gstreamer initialization
@@ -135,16 +136,20 @@ int main(int arg, char *argv[]) {
         if (msg != nullptr){
             handle_message(&data,msg);
         }else{
-            gst_element_set_state(data.pipeline, GST_STATE_READY);
-            //gst_element_set_state(data.playbin, GST_STATE_NULL);
+            if (switchDone==FALSE){
+                gst_element_set_state(data.pipeline, GST_STATE_READY);
+                //gst_element_set_state(data.playbin, GST_STATE_NULL);
 
-            string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-            g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
-            gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
-            g_print("\n Reached 10S, performing seek ....\n");
-            //gst_element_seek_simple(data.playbin,GST_FORMAT_TIME,static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_KEY_UNIT),(30*GST_SECOND));
-            //data.seek_done = TRUE;
+                string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
+                g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
+                gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
+                g_print("\n Reached 10S, performing seek ....\n");
+                //gst_element_seek_simple(data.playbin,GST_FORMAT_TIME,static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_KEY_UNIT),(30*GST_SECOND));
+                //data.seek_done = TRUE;
+                switchDone = TRUE;
            
+
+            }
         }
     }while(!terminate);
 
