@@ -4,6 +4,17 @@
 
 using namespace std;
 
+class Hmmm{
+    public:
+        Hmmm(){
+            g_print("Constructor ........\n");
+        };
+        ~Hmmm(){
+            g_print(" ======= > Destructor ........\n");
+            
+        }
+};
+
 /* Structure to contain all our information, so we can pass it to the callbacks */
 struct Custom_Data{
     GstElement *pipeline;
@@ -15,10 +26,14 @@ struct Custom_Data{
     GstElement *vsink;
 
 };
+
+Custom_Data data{};
+Hmmm hmm{};
+const char * source =  "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
 /* Handler for the pad added signal */
 static void pad_added_handler(GstElement *src,GstPad *pad,Custom_Data *data);
 
-static void handle_message(Custom_Data *data, GstMessage *msg){
+static void handle_message(GstMessage *msg){
     GError *err;
     gchar *debug_info;
     switch (GST_MESSAGE_TYPE(msg))
@@ -40,8 +55,27 @@ static void handle_message(Custom_Data *data, GstMessage *msg){
     gst_message_unref(msg);
 
 }
+
+static void start_media(){
+    gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
+}
+
+static void stop_media(){
+    gst_element_set_state(data.pipeline, GST_STATE_PAUSED);
+}
+
+
+void set_media_src(const char* newUrl){
+    if (strcmp(newUrl,source)!=0){
+        gst_element_set_state(data.pipeline, GST_STATE_READY);
+        g_object_set(data.source,"uri", newUrl ,NULL);
+        gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
+    }else{
+        g_printerr("Cannot rerun the same URL ! %s",newUrl);
+    }
+}
+
 int main(int arg, char *argv[]) {
-    Custom_Data data{};
     GstBus *bus = nullptr;
     GstMessage *msg = nullptr;
     GstStateChangeReturn ret;
@@ -58,7 +92,7 @@ int main(int arg, char *argv[]) {
     data.vconvert = gst_element_factory_make("videoconvert","vconvert");
     data.resample = gst_element_factory_make("audioresample","resample");
     data.asink = gst_element_factory_make("autoaudiosink","asink");
-    data.vsink = gst_element_factory_make("fbdevsink","vsink");
+    data.vsink = gst_element_factory_make("autovideosink","vsink");
 
     /* create the empty pipeline */
     data.pipeline = gst_pipeline_new("test-pipeline");
@@ -83,11 +117,7 @@ int main(int arg, char *argv[]) {
     }
 
     /* Set the URI to play*/
-    /* Below can be replaced with the command line argument to dynamically change the source*/
-    //string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-    string uriSrc = "http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4";
-
-    g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
+    g_object_set(data.source,"uri", source ,NULL);
     
     /* connect to the pad-added signal */ 
     g_signal_connect(data.source,"pad-added",G_CALLBACK(pad_added_handler),&data);
@@ -106,14 +136,12 @@ int main(int arg, char *argv[]) {
                                         static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
         // free memory
         if (msg != nullptr){
-            handle_message(&data,msg);
+            handle_message(msg);
         }else{
             if (switchDone==FALSE){
-                gst_element_set_state(data.pipeline, GST_STATE_READY);
-                string uriSrc = "https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm";
-                g_object_set(data.source,"uri", uriSrc.c_str() ,NULL);
-                gst_element_set_state(data.pipeline, GST_STATE_PLAYING);
-                g_print("\n Reached 10S, performing seek ....\n");
+                set_media_src("https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm");
+                //set_media_src("http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4");
+                hmm.~Hmmm();
                 switchDone = TRUE;
             }
         }
