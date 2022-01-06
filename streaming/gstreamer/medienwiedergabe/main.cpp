@@ -264,12 +264,6 @@ int main (int arg, char *argv[]){
     this_thread::sleep_for(15s);
     g_print("Will switch the video\n");
     player.set_media_src("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
-    this_thread::sleep_for(15s);
-    g_print("Will switch the video\n");
-    player.set_media_src("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4");
-     
-     
-    
     t1.join();
     return 0;
 }
