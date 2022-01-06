@@ -258,6 +258,10 @@ int main (int arg, char *argv[]){
     this_thread::sleep_for(10s);
     g_print("Will switch the video\n");
     player.set_media_src("https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm");
+    this_thread::sleep_for(10s);
+    g_print("Will switch the video\n");
+    player.set_media_src("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
+    
     t1.join();
     return 0;
 }
