@@ -4,7 +4,7 @@ project(sacn_client_01) #Project name
 set(CMAKE_CXX_STANDARD 17) 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread")
 
-add_subdirectory("sacn_lib")
+add_subdirectory("lib")
 
 
 
