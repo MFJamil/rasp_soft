@@ -60,7 +60,7 @@ int MediaPlayer::create_elements(){
     data.vconvert = gst_element_factory_make("videoconvert","vconvert");
     data.resample = gst_element_factory_make("audioresample","resample");
     data.asink = gst_element_factory_make("autoaudiosink","asink");
-    data.vsink = gst_element_factory_make("kmssink","vsink");
+    data.vsink = gst_element_factory_make("autovideosink","vsink");
     /* create the empty pipeline */
     data.pipeline = gst_pipeline_new("test-pipeline");  
     if(!data.pipeline || !data.source || !data.aconvert || !data.resample || !data.asink || !data.vsink || !data.vconvert){
